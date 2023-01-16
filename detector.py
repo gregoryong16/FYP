@@ -2,11 +2,10 @@ import albumentations as albu
 import numpy as np
 import torch
 
+from detector_postprocessing import DetectorPostProcessing
 # from model_training.detection.retinanet_v2 import RetinaNet
 from retinanet import RetinaNet
-
-from .detector_postprocessing import DetectorPostProcessing
-from .ssd import SSD
+from ssd import SSD
 
 
 class Detector(object):

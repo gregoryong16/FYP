@@ -1,18 +1,18 @@
 ---
 experiment:
   name: tiger_detection_exp1
-  folder: /home/cortwave/projects/tigerc/tiger_detection/detection_exp
+  folder: /Users/grego/Downloads/FYP
 phase: train
 task: detect
 
 train:
-  ann_path: /home/cortwave/projects/tigerc/tiger_detection/tigers_data/pseudolabel.json
-  img_path: /home/cortwave/projects/tigerc/tiger_detection/tigers_data/detection_img/trainval
+  ann_path: /Users/grego/Downloads/FYP/data/outputs.json
+  img_path: /Users/grego/Downloads/FYP/data/trainval
   img_size: 224
   transform: strong
 val:
-  ann_path: /home/cortwave/projects/tigerc/tiger_detection/tigers_data/val.json
-  img_path: /home/cortwave/projects/tigerc/tiger_detection/tigers_data/detection_img/trainval
+  ann_path: /Users/grego/Downloads/FYP/data/outputs.json
+  img_path: /Users/grego/Downloads/FYP/data/trainval
   img_size: 224
   transform: weak
 

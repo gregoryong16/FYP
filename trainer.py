@@ -5,9 +5,9 @@ import torch
 import torch.optim as optim
 import tqdm
 from glog import logger
-from loss import get_loss
 
 from adapters import get_model_adapter
+from losses.loss import get_loss
 from metric_utils import EarlyStopping, get_metric_counter
 
 

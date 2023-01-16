@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from .backbones import get_backbone
-from .prior_box import PriorBox
+from backbones import get_backbone
+from prior_box import PriorBox
 
 
 class SSD(nn.Module):
