@@ -94,6 +94,7 @@ def convert_xmls_to_cocojson(annotation_paths: List[str],
     bnd_id = 1  # START_BOUNDING_BOX_ID, TODO input as args ?
     print('Start converting !')
     for a_path in tqdm(annotation_paths):
+        a_path= str(a_path)+ ".xml"
         # Read annotation xml
         ann_tree = ET.parse(a_path)
         ann_root = ann_tree.getroot()
