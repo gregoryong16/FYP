@@ -1,6 +1,8 @@
+import asyncio
 from functools import partial
 
 import cv2
+import torch
 import torch.backends.cudnn as cudnn
 from joblib import cpu_count
 from torch.utils.data import DataLoader
@@ -34,10 +36,10 @@ if __name__ == '__main__':
     get_dataloader = partial(DataLoader, batch_size=batch_size, num_workers=cpu_count(),
                              shuffle=True, drop_last=True,
                              collate_fn=detection_collate, pin_memory=True)
-
+    
     datasets = map(config.pop, ('train', 'val'))
     datasets = map(get_dataset, datasets)
     train, val = map(get_dataloader, datasets)
-
+    
     trainer = Trainer(_get_model(config).cuda(), config, train=train, val=val)
     trainer.train()

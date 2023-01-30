@@ -80,8 +80,6 @@ class Trainer(object):
         tq = tqdm.tqdm(total=self.steps_per_epoch)
         tq.set_description('Epoch {}, lr {}'.format(epoch, lr))
         for i, data in enumerate(self.train_dataset):
-            print("i: ",i)
-            print("data: ", data)
             images, targets = self.model_adapter.get_input(data)
             outputs = self.model(images)
             self.optimizer.zero_grad()
