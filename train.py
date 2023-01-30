@@ -39,6 +39,7 @@ if __name__ == '__main__':
     
     datasets = map(config.pop, ('train', 'val'))
     datasets = map(get_dataset, datasets)
+    
     train, val = map(get_dataloader, datasets)
     
     trainer = Trainer(_get_model(config).cuda(), config, train=train, val=val)

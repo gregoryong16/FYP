@@ -317,10 +317,13 @@ class DetectionModelAdapter(ModelAdapter):
             torch.Tensor: tensor of images
             list: list of object detection targets (torch.Tensor)
         """
-        images, targets = data
-        images = images.cuda()
-        targets = [ann.cuda() for ann in targets]
-        return images, targets
+        try:
+            print(str(data))
+        except:
+            images, targets = data
+            images = images.cuda()
+            targets = [ann.cuda() for ann in targets]
+            return images, targets
 
     @staticmethod
     def get_loss(combined_loss):
