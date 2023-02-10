@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torchvision.models.densenet import densenet121
+from torchvision.models.densenet import DenseNet121_Weights, densenet121
 
 from prior_box import PriorBox
 
@@ -15,7 +15,7 @@ class RetinaNet(nn.Module):
         num_anchors = config.get('num_anchors', 6)
         num_filters_fpn = config.get('num_filters_fpn', 128)
         self.num_classes = config['num_classes']
-        fmaps = [80, 80, 40, 20, 10]
+        fmaps = [56, 56, 28, 14, 7]
         self.size = config["img_size"]
         self.priorbox = PriorBox(self.size, feature_maps=fmaps)
         self.num_anchors = num_anchors
@@ -49,7 +49,7 @@ class FPN(nn.Module):
     def __init__(self, out_channels):
 
         super().__init__()
-        backbone = densenet121(pretrained=True).features
+        backbone = densenet121(weights=DenseNet121_Weights.IMAGENET1K_V1).features
         self.upsample = nn.UpsamplingNearest2d(scale_factor=2)
         self.backbones = nn.ModuleList([
             backbone[:4],

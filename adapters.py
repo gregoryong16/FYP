@@ -317,13 +317,10 @@ class DetectionModelAdapter(ModelAdapter):
             torch.Tensor: tensor of images
             list: list of object detection targets (torch.Tensor)
         """
-        try:
-            print(str(data))
-        except:
-            images, targets = data
-            images = images.cuda()
-            targets = [ann.cuda() for ann in targets]
-            return images, targets
+        images, targets = data
+        images = images.cuda()
+        targets = [ann.cuda() for ann in targets]
+        return images, targets
 
     @staticmethod
     def get_loss(combined_loss):
@@ -393,7 +390,7 @@ class DetectionModelAdapter(ModelAdapter):
 
                 jac = jaccard(preds[:, :4], targets[:, :4]) >= self.iou_thr
                 jac_new = torch.zeros(jac.shape, dtype=torch.int8)
-                first_ones = [(e, i) for (i, e) in enumerate(list(jac.argmax(0).numpy()))]
+                first_ones = [(e, i) for (i, e) in enumerate(list(jac.float().argmax(0).numpy()))]
                 for idx in first_ones:
                     jac_new[idx] = jac[idx]
 
@@ -409,7 +406,7 @@ class DetectionModelAdapter(ModelAdapter):
             return ap / unique_classes
 
         loc, conf, priors = output
-        priors = priors[0]
+        # priors = priors[0]
         img_size = self.img_size, self.img_size
         num = len(loc)
         map_metric = 0

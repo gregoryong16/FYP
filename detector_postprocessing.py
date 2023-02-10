@@ -233,7 +233,7 @@ class DetectorPostProcessing(object):
         # ii -> category id, 0 - background class
         for ii in range(1, detections.size(1)):
             j = 0
-            while detections[0, ii, j, 0] >= self.visual_thr:
+            while detections[0, ii, j, 0] >= self.visual_thr and j<=200:
                 score = detections[0, ii, j, 0].tolist()
                 pt = (detections[0, ii, j, 1:] * scale).tolist()
                 bbox = [pt[0], pt[1], pt[2] - pt[0], pt[3] - pt[1]]

@@ -29,7 +29,7 @@ class PriorBox(object):
         self.feature_maps = feature_maps
         self.steps = self._get_steps()
         self.aspect_ratios = [[2, 3]] * _NUM_BOXES
-        self.num_priors = len(self.aspect_ratios)
+        self.num_priors = len(self.aspect_ratios)/2
         self.clip = True
 
     def _get_steps(self):

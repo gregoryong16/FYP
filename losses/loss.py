@@ -15,7 +15,7 @@ def _get_classfication_loss(loss_name):
     if loss_name == 'bce':
         loss = nn.BCEWithLogitsLoss()
     elif loss_name == 'cross_entropy_loss':
-        loss = nn.CrossEntropyLoss(size_average=True)
+        loss = nn.CrossEntropyLoss(reduction='mean')
     else:
         raise ValueError("Classification loss [%s] not recognized." % loss_name)
     return loss
@@ -27,7 +27,7 @@ def _get_localization_loss(loss_name):
         loss_name (str): loss name
     """
     if loss_name == 'l1_smooth_loss':
-        loss = nn.SmoothL1Loss(size_average=True)
+        loss = nn.SmoothL1Loss(reduction='mean')
     else:
         raise ValueError("Localization loss [%s] not recognized." % loss_name)
     return loss

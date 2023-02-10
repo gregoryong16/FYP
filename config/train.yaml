@@ -6,13 +6,13 @@ phase: train
 task: detect
 
 train:
-  ann_path: /Users/grego/Downloads/FYP/data/outputs.json
-  img_path: /Users/grego/Downloads/FYP/data/trainval
+  ann_path: /Users/grego/Downloads/FYP/data/train_output.json
+  img_path: /Users/grego/Downloads/FYP/data/train_images
   img_size: 224
   transform: strong
 val:
-  ann_path: /Users/grego/Downloads/FYP/data/outputs.json
-  img_path: /Users/grego/Downloads/FYP/data/trainval
+  ann_path: /Users/grego/Downloads/FYP/data/val_output.json
+  img_path: /Users/grego/Downloads/FYP/data/val_images
   img_size: 224
   transform: weak
 
@@ -45,6 +45,6 @@ scheduler:
   factor: 0.5
   min_lr: 0.000001
 
-batch_size: 256
-num_epochs: 250
+batch_size: 16
+num_epochs: 50
 early_stopping: 15
