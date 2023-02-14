@@ -26,18 +26,18 @@ from numba import cuda
 
 # Training configurations
 cfg = get_cfg()
-cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_X_101_32x8d_FPN_3x.yaml"))
+cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml"))
 cfg.DATASETS.TRAIN = ("my_dataset_train",)
 cfg.DATASETS.TEST = ("my_dataset_val",)
 
 cfg.DATALOADER.NUM_WORKERS = 0
-cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_X_101_32x8d_FPN_3x.yaml")  # Let training initialize from model zoo
+cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml")  # Let training initialize from model zoo
 cfg.SOLVER.IMS_PER_BATCH = 1
 cfg.SOLVER.BASE_LR = 0.001
 
 
 cfg.SOLVER.WARMUP_ITERS = 1000
-cfg.SOLVER.MAX_ITER = 1500 #adjust up if val mAP is still rising, adjust down if overfit
+cfg.SOLVER.MAX_ITER = 50 #adjust up if val mAP is still rising, adjust down if overfit original 1500
 cfg.SOLVER.STEPS = (1000, 1500)
 cfg.SOLVER.GAMMA = 0.05
 
@@ -66,6 +66,7 @@ register_coco_instances("my_dataset_train", {}, "./train/_annotations.coco.json"
 register_coco_instances("my_dataset_val", {}, "./valid/_annotations.coco.json", "./valid")
 register_coco_instances("my_dataset_test", {}, "./test/_annotations.coco.json", "./test")
 
+
 #visualize training data
 my_dataset_train_metadata = MetadataCatalog.get("my_dataset_train")
 dataset_dicts = DatasetCatalog.get("my_dataset_train")
@@ -82,21 +83,21 @@ class CocoTrainer(DefaultTrainer):
 
     return COCOEvaluator(dataset_name, cfg, False, output_folder)
 
-# os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 trainer = CocoTrainer(cfg)
-# trainer.resume_or_load(resume=False)
-# trainer.train()
+trainer.resume_or_load(resume=False)
+trainer.train()
 
 ################### Testing ####################################################################
-from detectron2.data import (DatasetCatalog, MetadataCatalog,
-                             build_detection_test_loader)
+# from detectron2.data import (DatasetCatalog, MetadataCatalog,
+#                              build_detection_test_loader)
 
-cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
-cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.50
-predictor = DefaultPredictor(cfg)
-evaluator = COCOEvaluator("my_dataset_test", cfg, False, output_dir="./output/")
-val_loader = build_detection_test_loader(cfg, "my_dataset_test")
-inference_on_dataset(trainer.model, val_loader, evaluator)
+# cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+# cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.20
+# predictor = DefaultPredictor(cfg)
+# evaluator = COCOEvaluator("my_dataset_test", cfg, False, output_dir="./output/")
+# val_loader = build_detection_test_loader(cfg, "my_dataset_test")
+# inference_on_dataset(trainer.model, val_loader, evaluator)
 
 # cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
 # cfg.DATASETS.TEST = ("my_dataset_test", )
@@ -104,6 +105,7 @@ inference_on_dataset(trainer.model, val_loader, evaluator)
 # predictor = DefaultPredictor(cfg)
 # test_metadata = MetadataCatalog.get("my_dataset_test")
 
+###############################################################################
 # from detectron2.utils.visualizer import ColorMode
 # import glob
 

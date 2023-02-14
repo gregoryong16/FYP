@@ -183,6 +183,12 @@ class Detect(object):
                 Shape: [1,num_priors,4]
         """
         num = loc_data.size(0)  # batch size
+        # print("loc_data")
+        # print(loc_data.size())
+        # print("conf_data")
+        # print(conf_data.size())
+        # print("prior_data")
+        # print(prior_data.size())
         num_priors = prior_data.size(0)
         output = torch.zeros(num, self.num_classes, self.top_k, 5)
         conf_preds = conf_data.view(num, num_priors,

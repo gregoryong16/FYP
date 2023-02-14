@@ -1,0 +1,30 @@
+---
+experiment:
+  name: tiger_detection_exp
+  folder: /Users/grego/Downloads/FYP
+phase: test
+save_folder: eval
+#
+data:
+  - name: tigers
+    ann_path: /Users/grego/Downloads/FYP/data/val_output.json
+    img_path: /Users/grego/Downloads/FYP/data/val_images
+#
+model:
+  load_weights: False
+  weights_path: /Users/grego/Downloads/FYP/tiger_detection_exp1/last.h5
+  pretrain_weights: /Users/grego/Downloads/FYP/mobilenet_v2.pth.tar
+  num_classes: 2
+  img_size: 224
+  feature_maps: 6
+  name: retina_net
+  backbone: mobilenet
+  encoder_depth: 50
+  pretrained: True
+  visual_thr: 0.05
+  filter_thr: 0.01
+  filepath: /Users/grego/Downloads/FYP/tiger_detection_exp1/last.h5
+#
+batch_size: 16
+num_epochs: 50
+early_stopping: 15

@@ -3,3 +3,4 @@ tiger_detection_exp1/
 __pycache__/
 config/__pycache__/
 losses/__pycache__/
+feature_pyramid/
