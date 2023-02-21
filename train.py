@@ -33,7 +33,7 @@ if __name__ == '__main__':
     config = get_config("config/train.yaml")
 
     batch_size = config.pop('batch_size')
-    get_dataloader = partial(DataLoader, batch_size=batch_size, num_workers=0, #4 cores for me
+    get_dataloader = partial(DataLoader, batch_size=batch_size, num_workers=4, #4 cores for me
                              shuffle=True, drop_last=True,
                              collate_fn=detection_collate, pin_memory=True)
     

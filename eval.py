@@ -10,6 +10,7 @@ from config import get_config
 from data.coco import COCODetection
 from detector import Detector
 
+import cv2 
 
 def test_coco(model, testset, dataset_name, filename=None):
     """ Evaluates model on given dataset
@@ -33,12 +34,26 @@ def test_coco(model, testset, dataset_name, filename=None):
         img = testset.pull_image(i)
         bboxes, labels, scores = model(img)
         for bbox, label, score in zip(bboxes, labels, scores):
-            result.append({
-                "image_id": testset.ids[i],
-                "category_id": label,
-                "bbox": [round(i) for i in bbox],
-                "score": score
-            })
+            # added in by myself to control threshold
+            if score > 0.5:
+                category = {1: "tiger"}
+                cv2.rectangle(
+                            img,
+                            (int(bbox[0]), int(bbox[1])),
+                            (int(bbox[0]+bbox[2]), int(bbox[1]+bbox[3])),
+                            color=(0,255,0), thickness=2
+                        )
+                img = cv2.putText(img, category[label] + " - " + str(f"{score:.2f}"), (int(bbox[0]), int(bbox[1]-5)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, color=(0,255,0), thickness=2, 
+                    lineType=cv2.LINE_AA)
+                result.append({
+                    "image_id": testset.ids[i],
+                    "category_id": label,
+                    "bbox": [round(i) for i in bbox],
+                    "score": score
+                })
+            save_name = "0"* (4-len(str(testset.ids[i]))) + str(testset.ids[i])
+            cv2.imwrite(f"eval/images/{save_name}.jpg", cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         tq.update()
     tq.close()
 
@@ -46,7 +61,6 @@ def test_coco(model, testset, dataset_name, filename=None):
         with open(filename, "w") as f:
             json.dump(result, f)
     return result
-
 
 def print_summary(ann_path, result_path, dataset_name):
     """ Prints summary of a given submission file in COCO forma
