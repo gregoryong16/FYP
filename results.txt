@@ -1,0 +1,3 @@
+50 epochs
+Validation_mAP = 0.8074
+GFLOPs = 0.071
