@@ -1,6 +1,32 @@
+FD MobileNet
 50 epochs
 Validation_mAP = 0.8074
 GFLOPs = 0.071
 
 148 epochs
 Validation_mAP = 0.8987
+
+
+
+Yolov5
+50 Epochs
+Validation_mAP = 0.982
+Model summary: 214 layers, 7022326 parameters, 7022326 gradients, 15.9 GFLOPs 
+
+EffecientNet
+50 epochs
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.876
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.800
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.900
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.475
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.875
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.875
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.800
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.900
+loss=0.115, v_num=3, 
+valid_loss_epoch=0.104, valid_class_loss_epoch=0.0666, valid_box_loss_epoch=0.000756, 
+train_loss_step=0.260, train_class_loss_step=0.132, train_box_loss_step=0.00

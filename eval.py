@@ -1,6 +1,6 @@
 import json
 import os
-
+import torch
 import torch.backends.cudnn as cudnn
 import tqdm
 from pycocotools.coco import COCO
