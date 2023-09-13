@@ -6,8 +6,6 @@ GFLOPs = 0.071
 148 epochs
 Validation_mAP = 0.8987
 
-
-
 Yolov5
 50 Epochs
 Validation_mAP = 0.982

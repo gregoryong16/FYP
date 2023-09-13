@@ -19,7 +19,7 @@ val:
 model:
   load_weights: False
   weights_path: /home/haribo/okupyn_exp/binary_fpn_lowaug/best.h5
-  pretrain_weights: /home/cortwave/projects/tigerc/tiger_detection/tigers_code/mobilenet_v2.pth.tar
+  pretrain_weights: /Users/grego/Downloads/FYP/mobilenet_v2.pth.tar
   num_classes: 2
   img_size: 224
   feature_maps: 6
