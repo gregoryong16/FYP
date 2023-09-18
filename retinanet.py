@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 from torchvision.models.densenet import DenseNet121_Weights, densenet121
-
+from torchvision.models.mobilenetv2 import mobilenet_v2,MobileNet_V2_Weights
 from prior_box import PriorBox
-
 
 class RetinaNet(nn.Module):
 
@@ -49,23 +48,59 @@ class FPN(nn.Module):
     def __init__(self, out_channels):
 
         super().__init__()
-        backbone = densenet121(weights=DenseNet121_Weights.IMAGENET1K_V1).features
         self.upsample = nn.UpsamplingNearest2d(scale_factor=2)
+        # backbone = densenet121(weights=DenseNet121_Weights.IMAGENET1K_V1).features
+        # self.backbones = nn.ModuleList([
+        #     backbone[:4],
+        #     backbone.denseblock1,
+        #     nn.Sequential(
+        #         backbone.transition1,
+        #         backbone.denseblock2,
+        #     ),
+        #     nn.Sequential(
+        #         backbone.transition2,
+        #         backbone.denseblock3,
+        #     ),
+        #     nn.Sequential(
+        #         backbone.transition3,
+        #         backbone.denseblock4,
+        #     )
+        # ])
+        backbone_mobile = mobilenet_v2(MobileNet_V2_Weights).features
         self.backbones = nn.ModuleList([
-            backbone[:4],
-            backbone.denseblock1,
             nn.Sequential(
-                backbone.transition1,
-                backbone.denseblock2,
+                backbone_mobile[:3],
+                nn.Conv2d(24, 64, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0), bias=False),
+                nn.BatchNorm2d(64),
+                nn.ReLU6(inplace=True)
             ),
             nn.Sequential(
-                backbone.transition2,
-                backbone.denseblock3,
+                nn.Conv2d(64, 24, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
+                backbone_mobile[3:8],
+                nn.ConvTranspose2d(64, 256, kernel_size=4, stride=4, padding=0, bias=False)
             ),
             nn.Sequential(
-                backbone.transition3,
-                backbone.denseblock4,
-            )
+                nn.Conv2d(256, 64, kernel_size=1, stride=1, padding=0),
+                backbone_mobile[8:11],
+                nn.MaxPool2d(kernel_size=2, stride=2),
+                nn.Conv2d(64, 512, kernel_size=1, stride=1, padding=0),
+            ),
+            nn.Sequential(
+                nn.Conv2d(512, 64, kernel_size=3, stride=2, padding=1),  # Reduce spatial dimensions to 14x14
+                nn.ReLU(inplace=True),
+                backbone_mobile[11:15],
+                nn.ConvTranspose2d(160, 512, kernel_size=2, stride=2),  # Upsample to 14x14
+                nn.ReLU(inplace=True),
+                nn.Conv2d(512, 1024, kernel_size=1, stride=1, padding=0),  # 1x1 convolution to change channel size
+                nn.ReLU(inplace=True)
+            ),
+            nn.Sequential(
+                nn.Conv2d(1024, 160, kernel_size=2, stride=2),  # Reduce spatial dimensions to 7x7
+                nn.ReLU(inplace=True),
+                backbone_mobile[15:],
+                nn.Conv2d(1280, 1024, kernel_size=1, stride=1, padding=0)
+                
+            ) 
         ])
 
         self.up1 = nn.Sequential(
