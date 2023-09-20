@@ -46,5 +46,5 @@ scheduler:
   min_lr: 0.000001
 
 batch_size: 16
-num_epochs: 150
+num_epochs: 50
 early_stopping: 15

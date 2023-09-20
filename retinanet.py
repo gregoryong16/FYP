@@ -18,7 +18,7 @@ class RetinaNet(nn.Module):
         self.size = config["img_size"]
         self.priorbox = PriorBox(self.size, feature_maps=fmaps)
         self.num_anchors = num_anchors
-        self.fpn = FPN(out_channels=num_anchors * (4 + self.num_classes))
+        self.fpn = FPN(out_channels=num_anchors * (4 + self.num_classes),backbone='mobilenet_v2')
 
         with torch.no_grad():
             self.priors = self.priorbox.forward()
@@ -45,122 +45,131 @@ class RetinaNet(nn.Module):
 
 class FPN(nn.Module):
 
-    def __init__(self, out_channels):
+    def __init__(self, out_channels, backbone="densenet"):
 
         super().__init__()
         self.upsample = nn.UpsamplingNearest2d(scale_factor=2)
-        # backbone = densenet121(weights=DenseNet121_Weights.IMAGENET1K_V1).features
-        # self.backbones = nn.ModuleList([
-        #     backbone[:4],
-        #     backbone.denseblock1,
-        #     nn.Sequential(
-        #         backbone.transition1,
-        #         backbone.denseblock2,
-        #     ),
-        #     nn.Sequential(
-        #         backbone.transition2,
-        #         backbone.denseblock3,
-        #     ),
-        #     nn.Sequential(
-        #         backbone.transition3,
-        #         backbone.denseblock4,
-        #     )
-        # ])
-        backbone_mobile = mobilenet_v2(MobileNet_V2_Weights).features
-        self.backbones = nn.ModuleList([
-            nn.Sequential(
-                backbone_mobile[:3],
-                nn.Conv2d(24, 64, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0), bias=False),
-                nn.BatchNorm2d(64),
-                nn.ReLU6(inplace=True)
-            ),
-            nn.Sequential(
-                nn.Conv2d(64, 24, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False),
-                backbone_mobile[3:8],
-                nn.ConvTranspose2d(64, 256, kernel_size=4, stride=4, padding=0, bias=False)
-            ),
-            nn.Sequential(
-                nn.Conv2d(256, 64, kernel_size=1, stride=1, padding=0),
-                backbone_mobile[8:11],
-                nn.MaxPool2d(kernel_size=2, stride=2),
-                nn.Conv2d(64, 512, kernel_size=1, stride=1, padding=0),
-            ),
-            nn.Sequential(
-                nn.Conv2d(512, 64, kernel_size=3, stride=2, padding=1),  # Reduce spatial dimensions to 14x14
-                nn.ReLU(inplace=True),
-                backbone_mobile[11:15],
-                nn.ConvTranspose2d(160, 512, kernel_size=2, stride=2),  # Upsample to 14x14
-                nn.ReLU(inplace=True),
-                nn.Conv2d(512, 1024, kernel_size=1, stride=1, padding=0),  # 1x1 convolution to change channel size
-                nn.ReLU(inplace=True)
-            ),
-            nn.Sequential(
-                nn.Conv2d(1024, 160, kernel_size=2, stride=2),  # Reduce spatial dimensions to 7x7
-                nn.ReLU(inplace=True),
-                backbone_mobile[15:],
-                nn.Conv2d(1280, 1024, kernel_size=1, stride=1, padding=0)
-                
-            ) 
-        ])
+        self.backbone = backbone
+        if backbone == "densenet":
+            backbone = densenet121(weights=DenseNet121_Weights.IMAGENET1K_V1).features
+            self.backbones = nn.ModuleList([
+                backbone[:4],
+                backbone.denseblock1,
+                nn.Sequential(
+                    backbone.transition1,
+                    backbone.denseblock2,
+                ),
+                nn.Sequential(
+                    backbone.transition2,
+                    backbone.denseblock3,
+                ),
+                nn.Sequential(
+                    backbone.transition3,
+                    backbone.denseblock4,
+                )
+            ])
+            self.enc0_channel = 64
+            self.enc1_channel = 256
+            self.enc2_channel = 512
+            self.enc3_channel = 1024
+            self.enc4_channel = 1024
+
+        elif backbone == "mobilenet_v2":
+            backbone_mobile = mobilenet_v2(MobileNet_V2_Weights).features
+            self.backbones = nn.ModuleList([
+                nn.Sequential(
+                    backbone_mobile[:3], # out channels: 24
+                ),
+                nn.Sequential(
+                    backbone_mobile[3:4], # out channels: 24
+                ),
+                nn.Sequential(
+                    backbone_mobile[4:7], # out channels: 32
+                ),
+                nn.Sequential(
+                    backbone_mobile[7:14], # out channels: 96
+                ),
+                nn.Sequential(
+                    backbone_mobile[14:], # out channels: 1280
+                )
+            ])
+
+            self.transform_enc4_to_enc3 = nn.Sequential(
+                torch.nn.Conv2d(1280, 96, kernel_size=1, stride=1, padding=0),
+                torch.nn.ReLU6(inplace=True)
+            )
+
+            self.enc0_channel = 24
+            self.enc1_channel = 24
+            self.enc2_channel = 32
+            self.enc3_channel = 96
+            self.enc4_channel = 1280
+
+        else:
+            raise f"{backbone} not implemented."
 
         self.up1 = nn.Sequential(
-            nn.Conv2d(1024, 512, kernel_size=3, bias=False, padding=1),
-            nn.BatchNorm2d(512),
+            nn.Conv2d(self.enc3_channel, self.enc2_channel, kernel_size=3, bias=False, padding=1),
+            nn.BatchNorm2d(self.enc2_channel),
             nn.ReLU(inplace=True),
         )
         self.up2 = nn.Sequential(
-            nn.Conv2d(512, 256, kernel_size=3, bias=False, padding=1),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(self.enc2_channel, self.enc1_channel, kernel_size=3, bias=False, padding=1),
+            nn.BatchNorm2d(self.enc1_channel),
             nn.ReLU(inplace=True),
         )
         self.up3 = nn.Sequential(
-            nn.Conv2d(256, 128, kernel_size=3, bias=False, padding=1),
-            nn.BatchNorm2d(128),
+            nn.Conv2d(self.enc1_channel, self.enc0_channel, kernel_size=3, bias=False, padding=1),
+            nn.BatchNorm2d(self.enc0_channel),
             nn.ReLU(inplace=True),
         )
         self.up4 = nn.Sequential(
-            nn.Conv2d(128 + 64, 128, kernel_size=3, bias=False, padding=1),
-            nn.BatchNorm2d(128),
+            nn.Conv2d(self.enc0_channel + self.enc0_channel, self.enc0_channel, kernel_size=3, bias=False, padding=1),
+            nn.BatchNorm2d(self.enc0_channel),
             nn.ReLU(inplace=True),
         )
 
         self.conv0 = nn.Sequential(
-            nn.Conv2d(1024, out_channels, kernel_size=1),
+            nn.Conv2d(self.enc4_channel, out_channels, kernel_size=1),
         )
         self.conv1 = nn.Sequential(
-            nn.Conv2d(512, out_channels, kernel_size=1),
+            nn.Conv2d(self.enc2_channel, out_channels, kernel_size=1),
         )
         self.conv2 = nn.Sequential(
-            nn.Conv2d(256, out_channels, kernel_size=1),
+            nn.Conv2d(self.enc1_channel, out_channels, kernel_size=1),
         )
         self.conv3 = nn.Sequential(
-            nn.Conv2d(128, out_channels, kernel_size=1),
+            nn.Conv2d(self.enc0_channel, out_channels, kernel_size=1),
         )
         self.conv4 = nn.Sequential(
-            nn.Conv2d(128, out_channels, kernel_size=1),
+            nn.Conv2d(self.enc0_channel, out_channels, kernel_size=1),
         )
 
     def forward(self, x):
         # Bottom-up pathway, from ResNet
-        enc0 = self.backbones[0](x)
-        enc1 = self.backbones[1](enc0)  # 256
-        enc2 = self.backbones[2](enc1)  # 512
-        enc3 = self.backbones[3](enc2)  # 1024
-        enc4 = self.backbones[4](enc3)  # 2048
+        enc0 = self.backbones[0](x)     # bs, channel_enc0, 56, 56
+        enc1 = self.backbones[1](enc0)  # bs, channel_enc1, 56, 56
+        enc2 = self.backbones[2](enc1)  # bs, channel_enc2, 28, 28
+        enc3 = self.backbones[3](enc2)  # bs, channel_enc3, 14, 14
+        enc4 = self.backbones[4](enc3)  # bs, channel_enc4, 7, 7
 
-        up1 = self.upsample(enc4)
-        up1 = up1 + enc3
-        up1 = self.up1(up1)
+        up1 = self.upsample(enc4)  # bs, channel_enc4, 14, 14
+        if up1.size(1) != enc3.size(1):
+            # transform up1's channel size when channel_enc3 != channel_enc4
+            up1 = self.transform_enc4_to_enc3(up1) + enc3
+        else:
+            up1 = up1 + enc3
+        up1 = self.up1(up1)  # bs, channel_enc2, 14, 14
 
-        up2 = self.upsample(up1)
+        up2 = self.upsample(up1)  # bs, channel_enc2, 28, 28
         up2 = up2 + enc2
-        up2 = self.up2(up2)
+        up2 = self.up2(up2)  # bs, channel_enc1, 28, 28
 
-        up3 = self.upsample(up2)
+        up3 = self.upsample(up2)  # bs, channel_enc1, 56, 56
         up3 = up3 + enc1
-        up3 = self.up3(up3)
+        up3 = self.up3(up3)  # bs, channel_enc1, 56, 56
 
-        up4 = torch.cat([up3, enc0], 1)
+        up4 = torch.cat([up3, enc0], 1)  # bs, channel_enc1 + channel_enc0, 56, 56
         up4 = self.up4(up4)
 
         map1 = self.conv0(enc4)
@@ -175,3 +184,10 @@ class FPN(nn.Module):
 
 def build_retinanet(config):
     return nn.DataParallel(RetinaNet(config))
+
+if __name__=="__main__":
+    model = FPN(out_channels=6 * (4 + 2), backbone="mobilenet_v2")
+    test_image = torch.rand(1,3,224,224)
+    output_maps = model(test_image)
+    for each_map in output_maps:
+        print(each_map.size())
