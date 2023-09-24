@@ -18,7 +18,7 @@ class RetinaNet(nn.Module):
         self.size = config["img_size"]
         self.priorbox = PriorBox(self.size, feature_maps=fmaps)
         self.num_anchors = num_anchors
-        self.fpn = FPN(out_channels=num_anchors * (4 + self.num_classes),backbone='mobilenet_v2')
+        self.fpn = FPN(out_channels=num_anchors * (4 + self.num_classes),backbone='mobilenet_v2_deep')
 
         with torch.no_grad():
             self.priors = self.priorbox.forward()
@@ -104,6 +104,49 @@ class FPN(nn.Module):
             self.enc2_channel = 32
             self.enc3_channel = 96
             self.enc4_channel = 1280
+        elif backbone == "mobilenet_v2_deep":
+            backbone_mobile = mobilenet_v2(MobileNet_V2_Weights).features
+            self.backbones = nn.ModuleList([
+                nn.Sequential(
+                backbone_mobile[:3],
+                nn.Upsample(size=(224, 224), mode='bilinear', align_corners=False),
+                nn.Conv2d(in_channels=24, out_channels=3, kernel_size=1),
+                backbone_mobile[:3],
+                ),
+                nn.Sequential(
+                    backbone_mobile[3:4],
+                    backbone_mobile[3:4],
+                ),
+                nn.Sequential(
+                    backbone_mobile[4:7],
+                    nn.Upsample(size=(56, 56), mode='bilinear', align_corners=False),
+                    nn.Conv2d(in_channels=32, out_channels=24, kernel_size=1),
+                    backbone_mobile[4:7],
+                ),
+                nn.Sequential(
+                    backbone_mobile[7:14],
+                    nn.Upsample(size=(28,28), mode='bilinear', align_corners=False),
+                    nn.Conv2d(in_channels=96, out_channels=32, kernel_size=1),
+                    backbone_mobile[7:14],
+                ),
+                nn.Sequential(
+                    backbone_mobile[14:],
+                    nn.Upsample(size=(14,14), mode='bilinear', align_corners=False),
+                    nn.Conv2d(in_channels=1280, out_channels=96, kernel_size=1),
+                    backbone_mobile[14:],
+                )
+            ])
+
+            self.transform_enc4_to_enc3 = nn.Sequential(
+                torch.nn.Conv2d(1280, 96, kernel_size=1, stride=1, padding=0),
+                torch.nn.ReLU6(inplace=True)
+            )
+
+            self.enc0_channel = 24
+            self.enc1_channel = 24
+            self.enc2_channel = 32
+            self.enc3_channel = 96
+            self.enc4_channel = 1280
 
         else:
             raise f"{backbone} not implemented."
@@ -145,6 +188,8 @@ class FPN(nn.Module):
             nn.Conv2d(self.enc0_channel, out_channels, kernel_size=1),
         )
 
+        
+
     def forward(self, x):
         # Bottom-up pathway, from ResNet
         enc0 = self.backbones[0](x)     # bs, channel_enc0, 56, 56
@@ -172,11 +217,11 @@ class FPN(nn.Module):
         up4 = torch.cat([up3, enc0], 1)  # bs, channel_enc1 + channel_enc0, 56, 56
         up4 = self.up4(up4)
 
-        map1 = self.conv0(enc4)
-        map2 = self.conv1(up1)
-        map3 = self.conv2(up2)
-        map4 = self.conv3(up3)
-        map5 = self.conv4(up4)
+        map1 = self.conv0(enc4) # torch.Size([1, 36, 7, 7])
+        map2 = self.conv1(up1) # torch.Size([1, 36, 14, 14])
+        map3 = self.conv2(up2) # torch.Size([1, 36, 28, 28])
+        map4 = self.conv3(up3) # torch.Size([1, 36, 56, 56])
+        map5 = self.conv4(up4) # torch.Size([1, 36, 56, 56])
         # for i in [map1, map2, map3, map4, map5]:
         #     print(i.size())
         return map1, map2, map3, map4, map5
@@ -186,7 +231,7 @@ def build_retinanet(config):
     return nn.DataParallel(RetinaNet(config))
 
 if __name__=="__main__":
-    model = FPN(out_channels=6 * (4 + 2), backbone="mobilenet_v2")
+    model = FPN(out_channels=6 * (4 + 2), backbone="mobilenet_v2_deep")
     test_image = torch.rand(1,3,224,224)
     output_maps = model(test_image)
     for each_map in output_maps:

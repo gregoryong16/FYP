@@ -11,6 +11,7 @@ from data.coco import COCODetection
 from detector import Detector
 
 import cv2 
+import time
 
 def test_coco(model, testset, dataset_name, filename=None):
     """ Evaluates model on given dataset
@@ -32,7 +33,13 @@ def test_coco(model, testset, dataset_name, filename=None):
     tq.set_description("Processing images from {}".format(dataset_name))
     for i in range(num_images):
         img = testset.pull_image(i)
+        # Record start time
+        start_time = time.time()
         bboxes, labels, scores = model(img)
+        # Record end time
+        end_time = time.time()
+
+        inference_time = end_time - start_time
         for bbox, label, score in zip(bboxes, labels, scores):
             # added in by myself to control threshold
             if score > 0.5:
@@ -50,7 +57,8 @@ def test_coco(model, testset, dataset_name, filename=None):
                     "image_id": testset.ids[i],
                     "category_id": label,
                     "bbox": [round(i) for i in bbox],
-                    "score": score
+                    "score": score,
+                    "time": inference_time  # Include inference time in results
                 })
             save_name = "0"* (4-len(str(testset.ids[i]))) + str(testset.ids[i])
             cv2.imwrite(f"eval/images/{save_name}.jpg", cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
@@ -97,5 +105,9 @@ if __name__ == '__main__':
 
         save_filename = os.path.join(config["save_folder"], "{}.txt".format(data_config["name"]))
 
-        test_coco(detector, testset, data_config["name"], save_filename)
+        test_results = test_coco(detector, testset, data_config["name"], save_filename)
+
+        # Calculate and print average inference time for this dataset
+        avg_inference_time = sum(result["time"] for result in test_results) / len(test_results)
+        print(f"Average inference time for {data_config['name']}: {avg_inference_time:.4f} seconds")
         print_summary(data_config["ann_path"], save_filename, data_config["name"])

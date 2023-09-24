@@ -1,6 +1,6 @@
 ---
 experiment:
-  name: tiger_detection_exp1
+  name: tiger_detection_deep_exp_1
   folder: /Users/grego/Downloads/FYP
 phase: train
 task: detect
@@ -24,7 +24,7 @@ model:
   img_size: 224
   feature_maps: 6
   name: retina_net
-  backbone: mobilenet
+  backbone: mobilenet_v2
   encoder_depth: 50
   pretrained: True
   visual_thr: 0.25
