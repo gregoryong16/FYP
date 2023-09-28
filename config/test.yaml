@@ -12,18 +12,18 @@ data:
 #
 model:
   load_weights: False
-  weights_path: /Users/grego/Downloads/FYP/tiger_detection_deep_exp_1/last.h5
+  weights_path: /Users/grego/Downloads/FYP/tiger_detection_deep_every_layer_add_one_exp_1/last.h5 # change
   pretrain_weights: /Users/grego/Downloads/FYP/mobilenet_v2.pth.tar
   num_classes: 2
   img_size: 224
   feature_maps: 6
   name: retina_net
-  backbone: mobilenet_v2_deep
+  backbone: mobilenet_v2_deep_every_layer_add_one # change
   encoder_depth: 50
   pretrained: True
   visual_thr: 0.05
   filter_thr: 0.01
-  filepath: /Users/grego/Downloads/FYP/tiger_detection_deep_exp_1/last.h5
+  filepath: /Users/grego/Downloads/FYP/tiger_detection_deep_every_layer_add_one_exp_1/last.h5 # change
 #
 batch_size: 16
 num_epochs: 50

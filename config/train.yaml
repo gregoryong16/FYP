@@ -1,6 +1,6 @@
 ---
 experiment:
-  name: tiger_detection_deep_exp_1
+  name: tiger_detection_deep_every_layer_add_one_exp_1 # change
   folder: /Users/grego/Downloads/FYP
 phase: train
 task: detect
@@ -24,7 +24,7 @@ model:
   img_size: 224
   feature_maps: 6
   name: retina_net
-  backbone: mobilenet_v2
+  backbone: mobilenet_v2_deep_every_layer_add_one # change
   encoder_depth: 50
   pretrained: True
   visual_thr: 0.25
@@ -36,7 +36,8 @@ model:
 
 optimizer:
   name: adam
-  lr: 0.001
+  lr: 0.0001 # Initial 0.001
+  appended_lr: 0.001
 
 scheduler:
   name: plateau

@@ -76,21 +76,30 @@ class Trainer(object):
         """
         self.model = self.model.train()
         self.metric_counter.clear()
-        lr = self.optimizer.param_groups[0]['lr']
+        # lr = self.optimizer.param_groups[0]['lr']
+        # tq = tqdm.tqdm(total=self.steps_per_epoch)
+        # tq.set_description('Epoch {}, lr {}'.format(epoch, lr))
+        lr_backbone = self.optimizer_backbone.param_groups[0]['lr']  # Learning rate for the backbone
+        lr_appended = self.optimizer_appended.param_groups[0]['lr']  # Learning rate for the appended layers
         tq = tqdm.tqdm(total=self.steps_per_epoch)
-        tq.set_description('Epoch {}, lr {}'.format(epoch, lr))
+        tq.set_description('Epoch {}, lr_backbone {}, lr_appended {}'.format(epoch, lr_backbone, lr_appended))
         for i, data in enumerate(self.train_dataset):
             images, targets = self.model_adapter.get_input(data)
             outputs = self.model(images)
-            self.optimizer.zero_grad()
+            self.optimizer_backbone.zero_grad()
+            self.optimizer_appended.zero_grad()
+            
             loss = self.criterion(outputs, targets)
-            #print( loss.size(), outputs.size() , targets.size() )
             total_loss, loss_dict = self.model_adapter.get_loss(loss)
             total_loss.backward()
-            self.optimizer.step()
+            
+            self.optimizer_backbone.step()
+            self.optimizer_appended.step()
+            
             self.metric_counter.add_losses(loss_dict)
             tq.update()
             tq.set_postfix(loss=self.metric_counter.loss_message())
+            
             if i >= self.steps_per_epoch:
                 break
         tq.close()
@@ -181,8 +190,48 @@ class Trainer(object):
             - model_adapter: adapter for a given model
         """
         self.criterion = get_loss(self.config['model']['loss'])
-        self.optimizer = self._get_optim(filter(lambda p: p.requires_grad, self.model.parameters()))
-        self.scheduler = self._get_scheduler(self.optimizer)
+        # self.optimizer = self._get_optim(filter(lambda p: p.requires_grad, self.model.parameters()))
+        # self.scheduler = self._get_scheduler(self.optimizer)
+        # Separate the parameters into two groups: backbone and appended layers
+        backbone_params = []
+        appended_params = []
+        
+        appended_layers = ["module.fpn.backbones.0.1","module.fpn.backbones.1.1","module.fpn.backbones.2.1",
+                           "module.fpn.backbones.3.1","module.fpn.backbones.4.1","module.fpn.backbones.4.2"]
+        
+        for name, param in self.model.named_parameters():
+            appended= False
+            for element in appended_layers:
+                if element in name:
+                    appended_params.append(param)
+                    print("appended layer: ", name)
+                    appended=True
+                    break
+            if not appended:
+                backbone_params.append(param)
+
+        # Define different learning rates for each group
+        backbone_lr = 0.001  # Adjust this value as needed
+        appended_lr = 0.01   # Adjust this value as needed
+
+        # Create separate optimizers for each group
+        self.optimizer_backbone = optim.Adam(backbone_params, lr=backbone_lr)
+        self.optimizer_appended = optim.Adam(appended_params, lr=appended_lr)
+
+        self.scheduler = self._get_scheduler(self.optimizer_backbone)  # You can choose either optimizer for scheduling
         self.early_stopping = EarlyStopping(patience=self.config['early_stopping'])
         self.model_adapter = get_model_adapter(self.config)
         os.makedirs(osp.join(self.config['experiment']['folder'], self.config['experiment']['name']), exist_ok=True)
+
+import torch.nn as nn
+
+class NamedSequential(nn.Sequential):
+    def __init__(self, name, *args):
+        super().__init__(*args)
+        self.name = name
+
+    def named_children(self):
+        for name, module in super().named_children():
+            yield name, module
+
+        yield self.name, self
