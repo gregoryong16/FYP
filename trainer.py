@@ -190,6 +190,7 @@ class Trainer(object):
             - model_adapter: adapter for a given model
         """
         self.criterion = get_loss(self.config['model']['loss'])
+        optimizer_config = self.config['optimizer']
         # self.optimizer = self._get_optim(filter(lambda p: p.requires_grad, self.model.parameters()))
         # self.scheduler = self._get_scheduler(self.optimizer)
         # Separate the parameters into two groups: backbone and appended layers
@@ -211,8 +212,8 @@ class Trainer(object):
                 backbone_params.append(param)
 
         # Define different learning rates for each group
-        backbone_lr = 0.001  # Adjust this value as needed
-        appended_lr = 0.01   # Adjust this value as needed
+        backbone_lr = optimizer_config['lr'] # Adjust this value as needed
+        appended_lr = optimizer_config['appended_lr']   # Adjust this value as needed
 
         # Create separate optimizers for each group
         self.optimizer_backbone = optim.Adam(backbone_params, lr=backbone_lr)
@@ -222,16 +223,3 @@ class Trainer(object):
         self.early_stopping = EarlyStopping(patience=self.config['early_stopping'])
         self.model_adapter = get_model_adapter(self.config)
         os.makedirs(osp.join(self.config['experiment']['folder'], self.config['experiment']['name']), exist_ok=True)
-
-import torch.nn as nn
-
-class NamedSequential(nn.Sequential):
-    def __init__(self, name, *args):
-        super().__init__(*args)
-        self.name = name
-
-    def named_children(self):
-        for name, module in super().named_children():
-            yield name, module
-
-        yield self.name, self

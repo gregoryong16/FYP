@@ -1,6 +1,6 @@
 ---
 experiment:
-  name: tiger_detection_deep_every_layer_add_one_exp_1 # change
+  name: tiger_detection_deep_every_layer_add_one_diff_schedulers_exp_1 # change
   folder: /Users/grego/Downloads/FYP
 phase: train
 task: detect
@@ -36,8 +36,8 @@ model:
 
 optimizer:
   name: adam
-  lr: 0.0001 # Initial 0.001
-  appended_lr: 0.001
+  lr: 0.00001 # Initial 0.001 # changeable
+  appended_lr: 0.0001 # changeable
 
 scheduler:
   name: plateau
