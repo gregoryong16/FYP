@@ -37,6 +37,8 @@ class Trainer(object):
         self.metric_counter = get_metric_counter(config)
         self.steps_per_epoch = config.get("steps_per_epoch", len(self.train_dataset))
         self.validation_steps = config.get('validation_steps', len(self.val_dataset))
+        self.scheduler_backbone = None  # Initialize the scheduler for the backbone
+        self.scheduler_appended = None  # Initialize the scheduler for the appended layers
 
     def train(self):
         """ Trains model for a given number of epochs.
@@ -152,10 +154,15 @@ class Trainer(object):
     def _update_scheduler(self):
         """ Updates scheduler
         """
-        if self.config['scheduler']['name'] == 'plateau':
-            self.scheduler.step(self.metric_counter.get_metric())
-        else:
-            self.scheduler.step()
+        # if self.config['scheduler']['name'] == 'plateau':
+        #     self.scheduler.step(self.metric_counter.get_metric())
+        # else:
+        #     self.scheduler.step()
+        # Step the learning rate scheduler for the backbone optimizer
+        self.scheduler_backbone.step(self.metric_counter.get_metric())
+
+        # Step the learning rate scheduler for the appended optimizer
+        self.scheduler_appended.step(self.metric_counter.get_metric())
 
     def _get_scheduler(self, optimizer):
         """ Creates scheduler for a given optimizer from Trainer config
@@ -219,7 +226,11 @@ class Trainer(object):
         self.optimizer_backbone = optim.Adam(backbone_params, lr=backbone_lr)
         self.optimizer_appended = optim.Adam(appended_params, lr=appended_lr)
 
-        self.scheduler = self._get_scheduler(self.optimizer_backbone)  # You can choose either optimizer for scheduling
+        # self.scheduler = self._get_scheduler(self.optimizer_backbone)  # You can choose either optimizer for scheduling
+        # Create separate schedulers for each optimizer
+        self.scheduler_backbone = self._get_scheduler(self.optimizer_backbone)
+        self.scheduler_appended = self._get_scheduler(self.optimizer_appended)
+
         self.early_stopping = EarlyStopping(patience=self.config['early_stopping'])
         self.model_adapter = get_model_adapter(self.config)
         os.makedirs(osp.join(self.config['experiment']['folder'], self.config['experiment']['name']), exist_ok=True)

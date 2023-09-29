@@ -108,6 +108,8 @@ if __name__ == '__main__':
         test_results = test_coco(detector, testset, data_config["name"], save_filename)
 
         # Calculate and print average inference time for this dataset
-        avg_inference_time = sum(result["time"] for result in test_results) / len(test_results)
-        print(f"Average inference time for {data_config['name']}: {avg_inference_time:.4f} seconds")
+        if len(test_results) != 0:
+            avg_inference_time = sum(result["time"] for result in test_results) / len(test_results)
+            print(f"Average inference time for {data_config['name']}: {avg_inference_time:.4f} seconds")
+        
         print_summary(data_config["ann_path"], save_filename, data_config["name"])
