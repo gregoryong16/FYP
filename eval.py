@@ -111,5 +111,6 @@ if __name__ == '__main__':
         if len(test_results) != 0:
             avg_inference_time = sum(result["time"] for result in test_results) / len(test_results)
             print(f"Average inference time for {data_config['name']}: {avg_inference_time:.4f} seconds")
-        
-        print_summary(data_config["ann_path"], save_filename, data_config["name"])
+            print_summary(data_config["ann_path"], save_filename, data_config["name"])
+        else:
+            print("No detections detected.")

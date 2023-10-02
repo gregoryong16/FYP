@@ -82,21 +82,27 @@ class Trainer(object):
         # tq = tqdm.tqdm(total=self.steps_per_epoch)
         # tq.set_description('Epoch {}, lr {}'.format(epoch, lr))
         lr_backbone = self.optimizer_backbone.param_groups[0]['lr']  # Learning rate for the backbone
-        lr_appended = self.optimizer_appended.param_groups[0]['lr']  # Learning rate for the appended layers
+        if hasattr(self, 'optimizer_appended') and self.optimizer_appended is not None:
+            lr_appended = self.optimizer_appended.param_groups[0]['lr']
         tq = tqdm.tqdm(total=self.steps_per_epoch)
-        tq.set_description('Epoch {}, lr_backbone {}, lr_appended {}'.format(epoch, lr_backbone, lr_appended))
+        if hasattr(self, 'optimizer_appended') and self.optimizer_appended is not None:
+            tq.set_description('Epoch {}, lr_backbone {}, lr_appended {}'.format(epoch, lr_backbone, lr_appended))
+        else:
+            tq.set_description('Epoch {}, lr_backbone {}'.format(epoch, lr_backbone))
         for i, data in enumerate(self.train_dataset):
             images, targets = self.model_adapter.get_input(data)
             outputs = self.model(images)
             self.optimizer_backbone.zero_grad()
-            self.optimizer_appended.zero_grad()
+            if hasattr(self, 'optimizer_appended') and self.optimizer_appended is not None:
+                self.optimizer_appended.zero_grad()
             
             loss = self.criterion(outputs, targets)
             total_loss, loss_dict = self.model_adapter.get_loss(loss)
             total_loss.backward()
             
             self.optimizer_backbone.step()
-            self.optimizer_appended.step()
+            if hasattr(self, 'optimizer_appended') and self.optimizer_appended is not None:
+                self.optimizer_appended.step()
             
             self.metric_counter.add_losses(loss_dict)
             tq.update()
@@ -160,9 +166,9 @@ class Trainer(object):
         #     self.scheduler.step()
         # Step the learning rate scheduler for the backbone optimizer
         self.scheduler_backbone.step(self.metric_counter.get_metric())
-
-        # Step the learning rate scheduler for the appended optimizer
-        self.scheduler_appended.step(self.metric_counter.get_metric())
+        if hasattr(self, 'scheduler_appended') and self.scheduler_appended is not None:
+            # Step the learning rate scheduler for the appended optimizer
+            self.scheduler_appended.step(self.metric_counter.get_metric())
 
     def _get_scheduler(self, optimizer):
         """ Creates scheduler for a given optimizer from Trainer config
@@ -204,11 +210,15 @@ class Trainer(object):
         backbone_params = []
         appended_params = []
         
+        # for mobilenet
         appended_layers = ["module.fpn.backbones.0.1","module.fpn.backbones.1.1","module.fpn.backbones.2.1",
                            "module.fpn.backbones.3.1","module.fpn.backbones.4.1","module.fpn.backbones.4.2"]
         
+        # for shufflenet
+        appended_layers = ["module.fpn.backbones.4.1"]
         for name, param in self.model.named_parameters():
             appended= False
+            print(name)
             for element in appended_layers:
                 if element in name:
                     appended_params.append(param)
@@ -222,14 +232,14 @@ class Trainer(object):
         backbone_lr = optimizer_config['lr'] # Adjust this value as needed
         appended_lr = optimizer_config['appended_lr']   # Adjust this value as needed
 
-        # Create separate optimizers for each group
         self.optimizer_backbone = optim.Adam(backbone_params, lr=backbone_lr)
-        self.optimizer_appended = optim.Adam(appended_params, lr=appended_lr)
-
-        # self.scheduler = self._get_scheduler(self.optimizer_backbone)  # You can choose either optimizer for scheduling
-        # Create separate schedulers for each optimizer
         self.scheduler_backbone = self._get_scheduler(self.optimizer_backbone)
-        self.scheduler_appended = self._get_scheduler(self.optimizer_appended)
+        
+        # self.scheduler = self._get_scheduler(self.optimizer_backbone)  # You can choose either optimizer for scheduling
+        
+        if len(appended_params) != 0:
+            self.optimizer_appended = optim.Adam(appended_params, lr=appended_lr)
+            self.scheduler_appended = self._get_scheduler(self.optimizer_appended)
 
         self.early_stopping = EarlyStopping(patience=self.config['early_stopping'])
         self.model_adapter = get_model_adapter(self.config)

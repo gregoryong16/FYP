@@ -1,6 +1,6 @@
 ---
 experiment:
-  name: tiger_detection_deep_every_layer_add_one_diff_schedulers_exp_1 # change
+  name: tiger_detection_shufflenet_channel_changed_0.001_0.01 # change
   folder: /Users/grego/Downloads/FYP
 phase: train
 task: detect
@@ -24,7 +24,7 @@ model:
   img_size: 224
   feature_maps: 6
   name: retina_net
-  backbone: mobilenet_v2_deep_every_layer_add_one # change
+  backbone: shufflenet_channel_changed # change
   encoder_depth: 50
   pretrained: True
   visual_thr: 0.25
@@ -36,8 +36,8 @@ model:
 
 optimizer:
   name: adam
-  lr: 0.0001 # Initial 0.001 # changeable
-  appended_lr: 0.001 # changeable
+  lr: 0.001 # Initial 0.001 # changeable
+  appended_lr: 0.01 # changeable
 
 scheduler:
   name: plateau
