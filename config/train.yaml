@@ -1,6 +1,6 @@
 ---
 experiment:
-  name: tiger_detection_shufflenet_channel_changed_0.001_0.01 # change
+  name: tiger_detection_shufflenet_X0_75_V4 # change
   folder: /Users/grego/Downloads/FYP
 phase: train
 task: detect
@@ -24,8 +24,8 @@ model:
   img_size: 224
   feature_maps: 6
   name: retina_net
-  backbone: shufflenet_channel_changed # change
-  encoder_depth: 50
+  backbone: shufflenet_X0_75_V4 # change
+  encoder_depth: 50 
   pretrained: True
   visual_thr: 0.25
 

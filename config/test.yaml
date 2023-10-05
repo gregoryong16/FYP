@@ -12,18 +12,18 @@ data:
 #
 model:
   load_weights: False
-  weights_path: /Users/grego/Downloads/FYP/tiger_detection_shufflenet_channel_changed_0.001_0.01/last.h5 # change
+  weights_path: /Users/grego/Downloads/FYP/tiger_detection_shufflenet_X0_75_V4/last.h5 # change
   pretrain_weights: /Users/grego/Downloads/FYP/mobilenet_v2.pth.tar
   num_classes: 2
   img_size: 224
   feature_maps: 6
   name: retina_net
-  backbone: shufflenet_channel_changed # change
+  backbone: shufflenet_X0_75_V4 # change
   encoder_depth: 50
   pretrained: True
   visual_thr: 0.05
   filter_thr: 0.01
-  filepath: /Users/grego/Downloads/FYP/tiger_detection_shufflenet_channel_changed_0.001_0.01/last.h5 # change
+  filepath: /Users/grego/Downloads/FYP/tiger_detection_shufflenet_X0_75_V4/last.h5 # change
 #
 batch_size: 16
 num_epochs: 50

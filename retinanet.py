@@ -14,8 +14,7 @@ class RetinaNet(nn.Module):
         num_anchors = config.get('num_anchors', 6)
         num_filters_fpn = config.get('num_filters_fpn', 128)
         self.num_classes = config['num_classes']
-        fmaps = [56, 56, 14, 7, 7] # for shufflenet 
-        # fmaps = [56, 56, 14, 14, 14] # for shufflenet channel changed
+        fmaps = [56, 56, 14, 7, 7] # for shufflenet
         # fmaps = [56, 56, 28, 14, 7] # for mobilenet
         self.size = config["img_size"]
         self.priorbox = PriorBox(self.size, feature_maps=fmaps)
@@ -309,7 +308,7 @@ class FPN(nn.Module):
             self.enc3_channel = 192
             self.enc4_channel = 1024
 
-        elif backbone =="shufflenet_channel_changed":
+        elif backbone =="shufflenet_X0_75_V1":
             from torchvision.models.shufflenetv2 import shufflenet_v2_x0_5, ShuffleNet_V2_X0_5_Weights
             from torchvision.models.shufflenetv2 import shufflenet_v2_x1_0, ShuffleNet_V2_X1_0_Weights
             shufflenet = shufflenet_v2_x0_5(ShuffleNet_V2_X0_5_Weights)
@@ -326,7 +325,7 @@ class FPN(nn.Module):
                     shufflenet.stage3,
                 ),
                 nn.Sequential(
-                    nn.ConvTranspose2d(in_channels=96,out_channels=232, kernel_size=3,  stride=2, padding=1),
+                    nn.ConvTranspose2d(in_channels=96,out_channels=232, kernel_size=1,  stride=1, padding=0),
                     shufflenet2.stage4,
                 ),
                 nn.Sequential(
@@ -341,6 +340,145 @@ class FPN(nn.Module):
             self.enc0_channel = 24
             self.enc1_channel = 48
             self.enc2_channel = 96
+            self.enc3_channel = 464
+            self.enc4_channel = 1024
+
+        elif backbone =="shufflenet_X1":
+            from torchvision.models.shufflenetv2 import shufflenet_v2_x1_0, ShuffleNet_V2_X1_0_Weights
+            shufflenetX1 = shufflenet_v2_x1_0(ShuffleNet_V2_X1_0_Weights)
+            self.backbones = nn.ModuleList([
+                nn.Sequential(
+                shufflenetX1.conv1,
+                shufflenetX1.maxpool
+                ),
+                nn.Sequential(
+                    shufflenetX1.stage2
+                ),
+                nn.Sequential(
+                    shufflenetX1.stage3,
+                ),
+                nn.Sequential(
+                    shufflenetX1.stage4,
+                ),
+                nn.Sequential(
+                    shufflenetX1.conv5
+                )
+            ])
+
+            self.transform_enc4_to_enc3 = nn.Sequential(
+                torch.nn.Conv2d(1024, 464, kernel_size=1, stride=1, padding=0),
+                torch.nn.ReLU6(inplace=True)
+            )
+            self.enc0_channel = 24
+            self.enc1_channel = 116
+            self.enc2_channel = 232
+            self.enc3_channel = 464
+            self.enc4_channel = 1024
+
+        elif backbone =="shufflenet_X0_75_V2":
+            from torchvision.models.shufflenetv2 import shufflenet_v2_x1_0, ShuffleNet_V2_X1_0_Weights
+            from torchvision.models.shufflenetv2 import shufflenet_v2_x0_5, ShuffleNet_V2_X0_5_Weights
+            shufflenetX1 = shufflenet_v2_x1_0(ShuffleNet_V2_X1_0_Weights)
+            shufflenetX0_5 = shufflenet_v2_x0_5(ShuffleNet_V2_X0_5_Weights)
+            self.backbones = nn.ModuleList([
+                nn.Sequential(
+                shufflenetX1.conv1,
+                shufflenetX1.maxpool
+                ),
+                nn.Sequential(
+                    shufflenetX1.stage2
+                ),
+                nn.Sequential(
+                    shufflenetX1.stage3,
+                ),
+                nn.Sequential(
+                    torch.nn.Conv2d(232, 96, kernel_size=1, stride=1, padding=0),
+                    torch.nn.ReLU6(inplace=True),
+                    shufflenetX0_5.stage4,
+                ),
+                nn.Sequential(
+                    shufflenetX0_5.conv5
+                )
+            ])
+
+            self.transform_enc4_to_enc3 = nn.Sequential(
+                torch.nn.Conv2d(1024, 192, kernel_size=1, stride=1, padding=0),
+                torch.nn.ReLU6(inplace=True)
+            )
+            self.enc0_channel = 24
+            self.enc1_channel = 116
+            self.enc2_channel = 232
+            self.enc3_channel = 192
+            self.enc4_channel = 1024
+
+        elif backbone =="shufflenet_X0_75_V3":
+            from torchvision.models.shufflenetv2 import shufflenet_v2_x1_0, ShuffleNet_V2_X1_0_Weights
+            from torchvision.models.shufflenetv2 import shufflenet_v2_x0_5, ShuffleNet_V2_X0_5_Weights
+            shufflenetX1 = shufflenet_v2_x1_0(ShuffleNet_V2_X1_0_Weights)
+            shufflenetX0_5 = shufflenet_v2_x0_5(ShuffleNet_V2_X0_5_Weights)
+            self.backbones = nn.ModuleList([
+                nn.Sequential(
+                shufflenetX1.conv1,
+                shufflenetX1.maxpool
+                ),
+                nn.Sequential(
+                    shufflenetX1.stage2
+                ),
+                nn.Sequential(
+                    torch.nn.Conv2d(116, 48, kernel_size=1, stride=1, padding=0),
+                    torch.nn.ReLU6(inplace=True),
+                    shufflenetX0_5.stage3,
+                ),
+                nn.Sequential(
+                    shufflenetX0_5.stage4,
+                ),
+                nn.Sequential(
+                    shufflenetX0_5.conv5
+                )
+            ])
+
+            self.transform_enc4_to_enc3 = nn.Sequential(
+                torch.nn.Conv2d(1024, 192, kernel_size=1, stride=1, padding=0),
+                torch.nn.ReLU6(inplace=True)
+            )
+            self.enc0_channel = 24
+            self.enc1_channel = 116
+            self.enc2_channel = 96
+            self.enc3_channel = 192
+            self.enc4_channel = 1024
+
+        elif backbone =="shufflenet_X0_75_V4":
+            from torchvision.models.shufflenetv2 import shufflenet_v2_x0_5, ShuffleNet_V2_X0_5_Weights
+            from torchvision.models.shufflenetv2 import shufflenet_v2_x1_0, ShuffleNet_V2_X1_0_Weights
+            shufflenet = shufflenet_v2_x0_5(ShuffleNet_V2_X0_5_Weights)
+            shufflenetX1 = shufflenet_v2_x1_0(ShuffleNet_V2_X1_0_Weights)
+            self.backbones = nn.ModuleList([
+                nn.Sequential(
+                shufflenet.conv1,
+                shufflenet.maxpool
+                ),
+                nn.Sequential(
+                    shufflenet.stage2
+                ),
+                nn.Sequential(
+                     nn.ConvTranspose2d(in_channels=48,out_channels=116, kernel_size=1,  stride=1, padding=0),
+                    shufflenetX1.stage3,
+                ),
+                nn.Sequential(
+                    shufflenetX1.stage4,
+                ),
+                nn.Sequential(
+                    shufflenetX1.conv5
+                )
+            ])
+
+            self.transform_enc4_to_enc3 = nn.Sequential(
+                torch.nn.Conv2d(1024, 464, kernel_size=1, stride=1, padding=0),
+                torch.nn.ReLU6(inplace=True)
+            )
+            self.enc0_channel = 24
+            self.enc1_channel = 48
+            self.enc2_channel = 232
             self.enc3_channel = 464
             self.enc4_channel = 1024
         else:
@@ -399,10 +537,7 @@ class FPN(nn.Module):
             up1 = up1 + enc3
         up1 = self.up1(up1)  # bs, channel_enc2, 14, 14
         
-        up2 = self.upsample(up1)  # bs, channel_enc2, 28, 28 ## uncomment for normal shufflenet
-        # print("enc2: ", enc2.size())
-        # up2=up1 ## uncomment for channel changed shufflenet
-        # print("up2: ", up2.size())
+        up2 = self.upsample(up1) 
         up2 = up2 + enc2
         up2 = self.up2(up2)  # bs, channel_enc1, 28, 28
         
@@ -423,7 +558,7 @@ class FPN(nn.Module):
         #     print(i.size())
         return map1, map2, map3, map4, map5
 
-        # for mobilenet
+        # # for mobilenet
         # # Bottom-up pathway, from ResNet
         # enc0 = self.backbones[0](x)     # bs, channel_enc0, 56, 56 [1, 24, 56, 56]
         # enc1 = self.backbones[1](enc0)  # bs, channel_enc1, 56, 56 [1, 48, 28, 28]
@@ -538,7 +673,7 @@ def build_retinanet(config):
 
     
 if __name__=="__main__":
-    model = FPN(out_channels=6 * (4 + 2), backbone="shufflenet_channel_changed")
+    model = FPN(out_channels=6 * (4 + 2), backbone="shufflenet_X0_75_V4")
     test_image = torch.rand(1,3,224,224)
     output_maps = model(test_image)
     for each_map in output_maps:
