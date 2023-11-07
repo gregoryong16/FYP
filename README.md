@@ -5,10 +5,13 @@
 ```
 $ pip install -r requirements.txt
 ```
-
+## Download dataset from: [https://cvwc2019.github.io/challenge.html](https://cvwc2019.github.io/challenge.html) Download only **detection_train**(images) and **Anno_Detection_train**(annotations)
 ## Converting VOC to COCO format for annotations
-
-### 1. Make labels.txt
+### 1. Change directory to data
+```
+cd data
+```
+### 2. Make labels.txt
 
 labels.txt if need for making dictionary for converting label to id.
 
@@ -32,11 +35,11 @@ This will search for all name tags in `VOC.xml` files, then show unique ones. Yo
 grep -ERoh '<name>(.*)</name>' /Path_to_folder | sort | uniq | sed 's/<name>//g' | sed 's/<\/name>//g' > labels.txt
 ```
 
-### 2. Split your data into train,test and validation set. (Annotations + Images)
+### 3. Split your data into train,test and validation set. (Annotations + Images)
 
-### 3. Run script for each dataset
+### 4. Run script for each dataset
 
-##### 3.1 Usage 1(Use ids list)
+##### 4.1 Usage 1(Use ids list)
 
 ```bash
 $ python voc2coco.py \
@@ -47,7 +50,7 @@ $ python voc2coco.py \
     <option> --ext xml
 ```
 
-##### 3.2 Usage 2(Use annotation paths list)
+##### 4.2 Usage 2(Use annotation paths list)
 
 **Sample paths.txt**
 
