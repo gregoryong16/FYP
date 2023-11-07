@@ -5,7 +5,7 @@
 ```
 $ pip install -r requirements.txt
 ```
-## Download dataset from: [https://cvwc2019.github.io/challenge.html](https://cvwc2019.github.io/challenge.html) Download only **detection_train**(images) and **Anno_Detection_train**(annotations)
+## Download dataset from: [https://cvwc2019.github.io/challenge.html](https://cvwc2019.github.io/challenge.html) Download only **detection_train** (images) and **Anno_Detection_train** (annotations)
 ## Converting VOC to COCO format for annotations
 ### 1. Change directory to data
 ```
