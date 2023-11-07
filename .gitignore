@@ -1,4 +1,4 @@
-data/
+data/*/
 tiger_detection_exp1/
 __pycache__/
 config/__pycache__/

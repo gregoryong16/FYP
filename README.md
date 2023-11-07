@@ -6,6 +6,57 @@
 $ pip install -r requirements.txt
 ```
 
+## Converting VOC to COCO format for annotations
+
+### 1. Make labels.txt
+
+labels.txt if need for making dictionary for converting label to id.
+
+**Sample labels.txt**
+
+```txt
+Label1
+Label2
+...
+```
+
+In order to get all labels from your `*.xml` files, you can use this command in shell:
+
+```
+grep -REoh '<name>.*</name>' /Path_to_Folder | sort | uniq
+```
+
+This will search for all name tags in `VOC.xml` files, then show unique ones. You can also go further and create `labels.txt` file.
+
+```
+grep -ERoh '<name>(.*)</name>' /Path_to_folder | sort | uniq | sed 's/<name>//g' | sed 's/<\/name>//g' > labels.txt
+```
+
+### 2. Split your data into train,test and validation set. (Annotations + Images)
+
+### 3. Run script for each dataset
+
+##### 3.1 Usage 1(Use ids list)
+
+```bash
+$ python voc2coco.py \
+    --ann_dir /path/to/annotation/dir \
+    --ann_ids /path/to/annotations/ids/list.txt \
+    --labels /path/to/labels.txt \
+    --output /path/to/output.json \
+    <option> --ext xml
+```
+
+##### 3.2 Usage 2(Use annotation paths list)
+
+**Sample paths.txt**
+
+```txt
+/path/to/annotation/file.xml
+/path/to/annotation/file2.xml
+...
+```
+
 ## To run training:
 
 ### 1. Configure [train.yaml](./config/train.yaml) based on the configurations intended.
@@ -19,8 +70,8 @@ Output is saved under 'experiment', where <br>
 
 ### Under 'train': <br>
 
-'ann_path': path of annotations for training <br>
-'img_path': path of images for training <br>
+'ann_path': path of annotations for training e.g. /Users/grego/Downloads/FYP/data/train_output.json<br>
+'img_path': path of images for training e.g. /Users/grego/Downloads/FYP/data/train_images <br>
 'img_size': size of image <br>
 'transform': strong/weak based on the type of augmentation you want. Strong for more drastic augmentations. <br>
 ^variables above are the same for 'val' <br>
